@@ -7,8 +7,15 @@ from app.db.base import Base
 from app import models  # noqa: F401  (ensures models are imported for table creation)
 
 from app.api.routers import auth  # ✅ import the auth router
+from app.api.routers import courses, lessons, enrollments, dashboard
 
 app = FastAPI(title="LearnFlow API")
+
+
+app.include_router(courses.router)
+app.include_router(lessons.router)
+app.include_router(enrollments.router)
+app.include_router(dashboard.router)
 
 # ✅ CORS (must be added before include_router so OPTIONS preflight works)
 app.add_middleware(
