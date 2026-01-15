@@ -41,7 +41,6 @@ class PasswordResetIn(BaseModel):
     new_password: str = Field(min_length=6, max_length=72)
 
 
-# --------- Helpers ----------
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
@@ -50,7 +49,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-# --------- Routes ----------
 @router.post("/register", status_code=201)
 def register(payload: RegisterIn, db: Session = Depends(get_db)):
     existing = db.query(User).filter(User.email == payload.email).first()
@@ -67,7 +65,7 @@ def register(payload: RegisterIn, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
 
-    # Return safe user data (no password)
+    
     return {
         "id": user.id,
         "full_name": user.full_name,
@@ -82,8 +80,7 @@ def login(payload: LoginIn, db: Session = Depends(get_db)):
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    # TEMP MVP: return a fake token just to unblock frontend testing
-    # Next step we'll replace with real JWT
+
     return {
         "access_token": f"dev-token-user-{user.id}",
         "token_type": "bearer",
@@ -98,17 +95,14 @@ def login(payload: LoginIn, db: Session = Depends(get_db)):
 
 @router.post("/request-password-reset")
 def request_password_reset(payload: PasswordResetRequestIn, db: Session = Depends(get_db)):
-    """
-    MVP: returns a reset token so you can test without sending email.
-    In production you'd email the token link to the user.
-    """
+   
     user = db.query(User).filter(User.email == payload.email).first()
 
-    # Always return the same message to avoid leaking which emails exist
+
     generic_message = {"message": "If the email exists, a reset token has been generated."}
 
     if not user:
-        return generic_message
+        return generic_message8
 
     token = reset_serializer.dumps({"user_id": user.id})
     return {**generic_message, "token": token}
