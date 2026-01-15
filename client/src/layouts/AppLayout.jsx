@@ -1,21 +1,44 @@
-import { Outlet, Link } from "react-router-dom";
+import { useState } from "react";
+import api from "../api/client";
+import useAuthStore from "../store/authStore";
+import { useNavigate } from "react-router-dom";
 
-export default function AppLayout() {
+export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const login = useAuthStore((state) => state.login);
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const res = await api.post("/auth/login", {
+      email,
+      password,
+    });
+
+    login(res.data.access_token, res.data.user);
+    navigate("/dashboard");
+  };
+
   return (
-    <div className="min-h-screen">
-      <header className="border-b">
-        <nav className="mx-auto max-w-6xl px-4 py-3 flex gap-4">
-          <Link to="/" className="font-semibold">LearnFlow</Link>
-          <Link to="/catalog">Catalog</Link>
-          <Link to="/dashboard">Dashboard</Link>
-          <Link to="/studio">Studio</Link>
-          <Link to="/settings">Settings</Link>
-        </nav>
-      </header>
+    <form onSubmit={handleSubmit}>
+      <h2>Login</h2>
 
-      <main className="mx-auto max-w-6xl px-4 py-6">
-        <Outlet />
-      </main>
-    </div>
+      <input
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+
+      <button type="submit">Login</button>
+    </form>
   );
 }
