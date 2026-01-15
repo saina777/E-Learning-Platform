@@ -10,6 +10,18 @@ from app.api.routers import auth  #  import the auth router
 
 app = FastAPI(title="LearnFlow API")
 # CORS (must be added before include_router so OPTIONS preflight works)
+from app.api.routers import auth  # ✅ import the auth router
+from app.api.routers import courses, lessons, enrollments, dashboard
+
+app = FastAPI(title="LearnFlow API")
+
+
+app.include_router(courses.router)
+app.include_router(lessons.router)
+app.include_router(enrollments.router)
+app.include_router(dashboard.router)
+
+# ✅ CORS (must be added before include_router so OPTIONS preflight works)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[

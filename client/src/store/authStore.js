@@ -1,34 +1,18 @@
 import { create } from "zustand";
 
-const STORAGE_KEY = "learnflow_auth";
+const useAuthStore = create((set) => ({
+  token: localStorage.getItem("token"),
+  user: null,
 
-function loadAuth() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { token: null, user: null };
-  } catch {
-    return { token: null, user: null };
-  }
-}
-
-export const useAuthStore = create((set, get) => ({
-  token: loadAuth().token,
-  user: loadAuth().user,
-
-  setAuth: ({ token, user }) => {
-    const data = { token, user };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    set(data);
-  },
-
-  setUser: (user) => {
-    const { token } = get();
-    const data = { token, user };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    set({ user });
+  login: (token, user) => {
+    localStorage.setItem("token", token);
+    set({ token, user });
   },
 
   logout: () => {
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem("token");
     set({ token: null, user: null });
   },
 }));
+
+export default useAuthStore;
