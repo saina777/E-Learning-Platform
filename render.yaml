@@ -1,0 +1,25 @@
+services:
+  # Backend API
+  - type: web
+    name: learnflow-api
+    runtime: python
+    buildCommand: cd server && chmod +x build.sh && ./build.sh
+    startCommand: cd server && python3 start_server.py
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:///./learnflow.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_ORIGIN
+        value: https://learnflow-web.onrender.com
+    healthCheckPath: /
+
+  # Frontend
+  - type: web
+    name: learnflow-web
+    runtime: node
+    buildCommand: cd client && npm install && npm run build
+    startCommand: cd client && npm run preview -- --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://learnflow-api.onrender.com

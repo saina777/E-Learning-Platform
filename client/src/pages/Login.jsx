@@ -25,7 +25,18 @@ export default function Login() {
       setAuth({ token, user });
       navigate("/dashboard");
     } catch (err) {
-      setError(err?.response?.data?.detail || "Login failed");
+      console.error('Login error:', err.response?.data);
+      let errorMessage = "Login failed";
+      
+      if (err.response?.data?.detail) {
+        if (Array.isArray(err.response.data.detail)) {
+          errorMessage = err.response.data.detail.map(e => e.msg).join(", ");
+        } else if (typeof err.response.data.detail === 'string') {
+          errorMessage = err.response.data.detail;
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

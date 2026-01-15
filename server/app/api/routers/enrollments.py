@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 
-from app.database import get_db
+from app.db.session import get_db
 from app.models.enrollment import Enrollment
 from app.schemas.enrollment import (
     EnrollmentCreate,

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from app.database import get_db
+from app.db.session import get_db
 from app.models.enrollment import Enrollment
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])

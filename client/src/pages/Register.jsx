@@ -20,11 +20,23 @@ export default function Register() {
         full_name: fullName,
         email,
         password,
-        role,
+        role: role.toLowerCase(),
       });
       navigate("/login");
     } catch (err) {
-      setError(err?.response?.data?.detail || "Registration failed");
+      console.error('Registration error:', err.response?.data);
+      let errorMessage = "Registration failed";
+      
+      if (err.response?.data?.detail) {
+        if (Array.isArray(err.response.data.detail)) {
+          // Handle validation errors array
+          errorMessage = err.response.data.detail.map(e => e.msg).join(", ");
+        } else if (typeof err.response.data.detail === 'string') {
+          errorMessage = err.response.data.detail;
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
