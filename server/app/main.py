@@ -4,24 +4,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.db.session import engine
 from app.db.base import Base
-from app import models  # noqa: F401  (ensures models are imported for table creation)
+from app import models
 
-from app.api.routers import auth  #  import the auth router
-
-app = FastAPI(title="LearnFlow API")
-# CORS (must be added before include_router so OPTIONS preflight works)
-from app.api.routers import auth  # ✅ import the auth router
+from app.api.routers import auth
 from app.api.routers import courses, lessons, enrollments, dashboard
 
 app = FastAPI(title="LearnFlow API")
-
 
 app.include_router(courses.router)
 app.include_router(lessons.router)
 app.include_router(enrollments.router)
 app.include_router(dashboard.router)
 
-# ✅ CORS (must be added before include_router so OPTIONS preflight works)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -33,10 +27,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create tables (temporary approach; later replace with Alembic migrations)
 Base.metadata.create_all(bind=engine)
 
-#  Register routers
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 
 @app.get("/")
