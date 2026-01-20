@@ -16,31 +16,36 @@ def enroll_in_course(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    if current_user.role != "student":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only students can enroll")
-    
-    # Check if course exists
-    course = db.query(Course).filter(Course.id == enrollment_data.course_id).first()
-    if not course:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
-    
-    # Check if already enrolled
-    existing = db.query(Enrollment).filter(
-        Enrollment.user_id == current_user.id,
-        Enrollment.course_id == enrollment_data.course_id
-    ).first()
-    if existing:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already enrolled")
-    
-    enrollment = Enrollment(
-        user_id=current_user.id,
-        course_id=enrollment_data.course_id,
-        current_status="Active"
-    )
-    db.add(enrollment)
-    db.commit()
-    db.refresh(enrollment)
-    return enrollment
+    try:
+        # Check if course exists
+        course = db.query(Course).filter(Course.id == enrollment_data.course_id).first()
+        if not course:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+        
+        # Check if already enrolled
+        existing = db.query(Enrollment).filter(
+            Enrollment.user_id == current_user.id,
+            Enrollment.course_id == enrollment_data.course_id
+        ).first()
+        if existing:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already enrolled in this course")
+        
+        # Allow any authenticated user to enroll
+        enrollment = Enrollment(
+            user_id=current_user.id,
+            course_id=enrollment_data.course_id,
+            current_status="Active"
+        )
+        db.add(enrollment)
+        db.commit()
+        db.refresh(enrollment)
+        return enrollment
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"Enrollment error: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Enrollment failed: {str(e)}")
 
 @router.get("/me", response_model=List[EnrollmentSchema])
 def get_my_enrollments(

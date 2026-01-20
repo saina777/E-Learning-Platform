@@ -41,7 +41,6 @@ def create_course(
         price=course_data.price,
         category=course_data.category,
         image_url=course_data.image_url,
-        learning_outcomes_json=course_data.learning_outcomes_json,
         instructor_id=instructor.id
     )
     db.add(course)

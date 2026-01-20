@@ -28,6 +28,7 @@ class CourseBase(BaseModel):
     description: str
     price: float
     category: str
+    image_url: Optional[str] = None
 
 class CourseCreate(CourseBase):
     pass
@@ -37,6 +38,7 @@ class CourseUpdate(BaseModel):
     description: Optional[str] = None
     price: Optional[float] = None
     category: Optional[str] = None
+    image_url: Optional[str] = None
 
 class Course(CourseBase):
     id: int
@@ -88,9 +90,7 @@ class Enrollment(EnrollmentBase):
     id: int
     user_id: int
     course_id: int
-    enrolled_at: datetime
-    completed_lessons: Optional[str] = None
-    progress_percentage: float = 0.0
+    enrollment_date: datetime
     
     class Config:
         from_attributes = True

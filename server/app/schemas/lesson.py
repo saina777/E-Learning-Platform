@@ -4,9 +4,10 @@ from typing import Optional
 class LessonBase(BaseModel):
     lesson_title: str
     content_body: str
-    video_link: str
+    video_link: Optional[str] = None
     order_sequence: int
     section_title: Optional[str] = None
+    duration_minutes: Optional[int] = None
 
 class LessonCreateIn(LessonBase):
     pass
@@ -17,6 +18,7 @@ class LessonUpdateIn(BaseModel):
     video_link: Optional[str] = None
     order_sequence: Optional[int] = None
     section_title: Optional[str] = None
+    duration_minutes: Optional[int] = None
 
 class LessonOut(LessonBase):
     id: int

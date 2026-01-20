@@ -22,6 +22,8 @@ app.include_router(auth.router, prefix="/auth")
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:5177",
+    "http://127.0.0.1:5177",
 ]
 
 app.add_middleware(

@@ -6,33 +6,21 @@ from app.models.lesson import Lesson
 from app.models.course import Course
 from app.models.enrollment import Enrollment
 from app.models.user import User
-from app.schemas import LessonCreate, LessonUpdate, Lesson as LessonSchema
+from app.schemas.lesson import LessonCreateIn as LessonCreate, LessonUpdateIn as LessonUpdate, LessonOut as LessonSchema
 
 router = APIRouter()
 
 @router.get("/courses/{course_id}/lessons", response_model=List[LessonSchema])
 def get_course_lessons(
     course_id: int,
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # Check if user is enrolled or is the instructor
+    # Check if course exists
     course = db.query(Course).filter(Course.id == course_id).first()
     if not course:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
     
-    if current_user.role == "instructor" and course.instructor_id == current_user.id:
-        # Instructor can see all lessons
-        pass
-    else:
-        # Check if student is enrolled
-        enrollment = db.query(Enrollment).filter(
-            Enrollment.user_id == current_user.id,
-            Enrollment.course_id == course_id
-        ).first()
-        if not enrollment:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enrolled in this course")
-    
+    # Return lessons for anyone (public view)
     lessons = db.query(Lesson).filter(Lesson.course_id == course_id).order_by(Lesson.order_sequence).all()
     return lessons
 

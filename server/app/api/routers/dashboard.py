@@ -31,6 +31,7 @@ def get_dashboard_data(
             "course_category": course.category,
             "current_status": enrollment.current_status,
             "progress_percent": progress_percent,
+            "total_lessons": lesson_count,
             "last_lesson_id": enrollment.last_lesson_id,
             "lesson_count": lesson_count
         })
