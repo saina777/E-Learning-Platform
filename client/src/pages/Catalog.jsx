@@ -106,9 +106,6 @@ export default function Catalog() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {courses.map((course) => (
             <div key={course.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
-              <div className="h-48 bg-gray-200 flex items-center justify-center">
-                <span className="text-gray-500">Course Image</span>
-              </div>
               <div className="p-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded">

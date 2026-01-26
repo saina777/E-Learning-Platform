@@ -5,6 +5,27 @@ import api from "../api/client";
 export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [courseProgress, setCourseProgress] = useState({});
+
+  // Load progress from localStorage
+  useEffect(() => {
+    const progress = {};
+    if (dashboardData?.enrollments) {
+      dashboardData.enrollments.forEach(enrollment => {
+        const stored = localStorage.getItem(`course-progress-${enrollment.course_id}`);
+        if (stored) {
+          try {
+            const completedIds = JSON.parse(stored);
+            // Calculate progress percentage (we'll get total lessons count from the API)
+            progress[enrollment.course_id] = completedIds;
+          } catch (e) {
+            console.error("Failed to parse stored progress", e);
+          }
+        }
+      });
+    }
+    setCourseProgress(progress);
+  }, [dashboardData]);
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -19,6 +40,25 @@ export default function Dashboard() {
     };
     fetchDashboard();
   }, []);
+
+  const handleDeleteCourse = async (enrollmentId) => {
+    try {
+      await api.delete(`/enrollments/${enrollmentId}`);
+      // Refresh dashboard
+      const res = await api.get("/dashboard");
+      setDashboardData(res.data);
+    } catch (error) {
+      console.error("Failed to delete enrollment", error);
+    }
+  };
+
+  const getProgressPercent = (enrollment) => {
+    const completedIds = courseProgress[enrollment.course_id] || [];
+    if (!enrollment.total_lessons || enrollment.total_lessons === 0) {
+      return 0;
+    }
+    return Math.round((completedIds.length / enrollment.total_lessons) * 100);
+  };
 
   if (loading) {
     return <div className="text-center py-8">Loading dashboard...</div>;
@@ -47,21 +87,30 @@ export default function Dashboard() {
                 <div className="mb-4">
                   <div className="flex justify-between text-sm text-gray-600 mb-1">
                     <span>Progress</span>
-                    <span>{Math.round(enrollment.progress_percent)}%</span>
+                    <span>{getProgressPercent(enrollment)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-blue-600 h-2 rounded-full"
-                      style={{ width: `${enrollment.progress_percent}%` }}
+                      style={{ width: `${getProgressPercent(enrollment)}%` }}
                     ></div>
                   </div>
                 </div>
-                <Link
-                  to={`/learn/${enrollment.course_id}`}
-                  className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                >
-                  Continue Course
-                </Link>
+                <div className="flex gap-2">
+                  <Link
+                    to={`/learn/${enrollment.course_id}`}
+                    className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-center"
+                  >
+                    Continue Course
+                  </Link>
+                  <button
+                    onClick={() => handleDeleteCourse(enrollment.enrollment_id)}
+                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                    title="Remove course from dashboard"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
             ))}
           </div>

@@ -9,18 +9,35 @@ export default function CourseDetails() {
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
+  const [isEnrolled, setIsEnrolled] = useState(false);
   const { user } = useAuthStore();
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        const [courseRes, lessonsRes] = await Promise.all([
-          api.get(`/courses/${courseId}`),
-          user ? api.get(`/courses/${courseId}/lessons`) : Promise.resolve({ data: [] })
-        ]);
+        const courseRes = await api.get(`/courses/${courseId}`);
         setCourse(courseRes.data);
-        setLessons(lessonsRes.data);
+        
+        // Get lessons (public endpoint)
+        try {
+          const lessonsRes = await api.get(`/courses/${courseId}/lessons`);
+          setLessons(lessonsRes.data || []);
+        } catch (err) {
+          console.error("Could not fetch lessons:", err);
+          setLessons([]);
+        }
+        
+        // Check if user is enrolled
+        if (user) {
+          try {
+            const enrollmentsRes = await api.get("/enrollments/me");
+            const enrolled = enrollmentsRes.data?.some(e => e.course_id === parseInt(courseId));
+            setIsEnrolled(enrolled || false);
+          } catch (err) {
+            console.error("Could not fetch enrollments:", err);
+          }
+        }
       } catch (error) {
         console.error("Failed to fetch course", error);
       } finally {
@@ -38,10 +55,9 @@ export default function CourseDetails() {
     setEnrolling(true);
     try {
       await api.post("/enrollments", { course_id: parseInt(courseId) });
-      navigate(`/learn/${courseId}`);
+      setIsEnrolled(true);
     } catch (error) {
       console.error("Failed to enroll", error);
-      alert("Failed to enroll in course");
     } finally {
       setEnrolling(false);
     }
@@ -95,12 +111,17 @@ export default function CourseDetails() {
                 ))}
               </div>
               <button
-                onClick={handleEnroll}
+                onClick={isEnrolled ? () => navigate(`/learn/${courseId}`) : handleEnroll}
                 disabled={enrolling}
                 className="w-full mt-6 bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50"
               >
-                {enrolling ? "Enrolling..." : "Enroll Now"}
+                {isEnrolled ? "Go to Course" : enrolling ? "Enrolling..." : "Enroll Now"}
               </button>
+              {isEnrolled && (
+                <div className="mt-4 p-3 bg-green-100 text-green-800 rounded text-center font-medium">
+                  ✓ You are enrolled in this course
+                </div>
+              )}
             </div>
           </div>
         </div>
