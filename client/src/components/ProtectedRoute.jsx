@@ -1,12 +1,14 @@
-import { Navigate } from "react-router-dom";
-import useAuthStore from "../store/authStore";
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuthStore } from "../store/authStore";
 
-export default function ProtectedRoute({ children }) {
-  const token = useAuthStore((state) => state.token);
+export default function ProtectedRoute({ allowedRoles }) {
+  const { token, user } = useAuthStore();
+  
+  if (!token) return <Navigate to="/login" replace />;
 
-  if (!token) {
-    return <Navigate to="/login" replace />;
+  if (allowedRoles && !allowedRoles.includes(user?.role)) {
+    return <Navigate to="/dashboard" replace />;
   }
-
-  return children;
+  
+  return <Outlet />;
 }

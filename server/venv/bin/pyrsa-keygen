@@ -1,4 +1,4 @@
-#!/home/derrick/derro/E-Learning-Platform/server/venv/bin/python3
+#!/home/allan-muuo/Documents/E-Learning-Platform/server/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
