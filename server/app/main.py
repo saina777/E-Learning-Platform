@@ -11,21 +11,21 @@ app = FastAPI()
 
 from fastapi.responses import Response
 
-@app.get("/favicon.ico")
-def favicon():
-    return Response(status_code=204)
+from app.api.routers import auth  #  import the auth router
+
+app = FastAPI(title="LearnFlow API")
+# CORS (must be added before include_router so OPTIONS preflight works)
+from app.api.routers import auth  # ✅ import the auth router
+from app.api.routers import courses, lessons, enrollments, dashboard
 
 
-from app.api.routers import auth
-app.include_router(auth.router, prefix="/auth")
 
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:5177",
-    "http://127.0.0.1:5177",
-]
+app.include_router(courses.router)
+app.include_router(lessons.router)
+app.include_router(enrollments.router)
+app.include_router(dashboard.router)
 
+# ✅ CORS (must be added before include_router so OPTIONS preflight works)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -34,6 +34,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Create tables (temporary approach; later replace with Alembic migrations)
 Base.metadata.create_all(bind=engine)
 seed_data()
 
@@ -44,6 +45,8 @@ app.include_router(lessons.router)
 app.include_router(enrollments.router, prefix="/enrollments")
 app.include_router(dashboard.router, prefix="/dashboard")
 
+#  Register routers
+app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 
 @app.get("/")
 def health():

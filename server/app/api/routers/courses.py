@@ -1,81 +1,74 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Optional
-from app.api.deps import get_db, get_current_user, require_instructor
+from typing import List
+
+from app.database import get_db
 from app.models.course import Course
-from app.models.user import User
-from app.schemas import CourseCreate, CourseUpdate, Course as CourseSchema
+from app.schemas.course import (
+    CourseCreate,
+    CourseUpdate,
+    CourseResponse
+)
 
-router = APIRouter()
+router = APIRouter(prefix="/courses", tags=["Courses"])
 
-@router.get("/", response_model=List[CourseSchema])
-def get_courses(
-    search: Optional[str] = Query(None),
-    category: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
-):
-    query = db.query(Course)
-    if search:
-        query = query.filter(Course.title.contains(search))
-    if category:
-        query = query.filter(Course.category == category)
-    courses = query.all()
-    return courses
-
-@router.get("/{course_id}", response_model=CourseSchema)
-def get_course(course_id: int, db: Session = Depends(get_db)):
-    course = db.query(Course).filter(Course.id == course_id).first()
-    if not course:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
-    return course
-
-@router.post("/", response_model=CourseSchema, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=CourseResponse, status_code=status.HTTP_201_CREATED)
 def create_course(
-    course_data: CourseCreate,
-    instructor: User = Depends(require_instructor),
+    course: CourseCreate,
     db: Session = Depends(get_db)
 ):
-    course = Course(
-        title=course_data.title,
-        description=course_data.description,
-        price=course_data.price,
-        category=course_data.category,
-        image_url=course_data.image_url,
-        instructor_id=instructor.id
-    )
-    db.add(course)
+    new_course = Course(**course.dict())
+    db.add(new_course)
     db.commit()
-    db.refresh(course)
+    db.refresh(new_course)
+    return new_course
+
+@router.get("/{course_id}", response_model=CourseResponse)
+def get_course(course_id: int, db: Session = Depends(get_db)):
+    course = db.query(Course).get(course_id)
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
     return course
 
-@router.put("/{course_id}", response_model=CourseSchema)
+@router.put("/{course_id}", response_model=CourseResponse)
 def update_course(
     course_id: int,
-    course_data: CourseUpdate,
-    instructor: User = Depends(require_instructor),
+    data: CourseUpdate,
     db: Session = Depends(get_db)
 ):
-    course = db.query(Course).filter(Course.id == course_id, Course.instructor_id == instructor.id).first()
+    course = db.query(Course).get(course_id)
     if not course:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
-    
-    for field, value in course_data.dict(exclude_unset=True).items():
-        setattr(course, field, value)
-    
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    for key, value in data.dict().items():
+        setattr(course, key, value)
+
     db.commit()
     db.refresh(course)
     return course
 
-@router.delete("/{course_id}")
-def delete_course(
+@router.patch("/{course_id}", response_model=CourseResponse)
+def patch_course(
     course_id: int,
-    instructor: User = Depends(require_instructor),
+    data: CourseUpdate,
     db: Session = Depends(get_db)
 ):
-    course = db.query(Course).filter(Course.id == course_id, Course.instructor_id == instructor.id).first()
+    course = db.query(Course).get(course_id)
     if not course:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
-    
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    for key, value in data.dict(exclude_unset=True).items():
+        setattr(course, key, value)
+
+    db.commit()
+    db.refresh(course)
+    return course
+
+@router.delete("/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_course(course_id: int, db: Session = Depends(get_db)):
+    course = db.query(Course).get(course_id)
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
     db.delete(course)
     db.commit()
-    return {"message": "Course deleted successfully"}
